@@ -7,7 +7,7 @@ const app = express();
 
 app.use(express.json({ limit: "128kb" }));
 app.use(express.static("public"));
-app.use(express.urlencoded({ limit: "128kb" }));
+app.use(express.urlencoded({ limit: "128kb", extended: true }));
 
 // configure CORS requests
 app.use(cors({
