@@ -1,0 +1,29 @@
+{
+  "name": "youtube-backend",
+  "version": "1.0.0",
+  "description": "Learning backend by building a backend for YouTube like platform.",
+  "homepage": "https://github.com/SarthakSingh-06/YouTube-Backend-Project#readme",
+  "bugs": {
+    "url": "https://github.com/SarthakSingh-06/YouTube-Backend-Project/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SarthakSingh-06/YouTube-Backend-Project.git"
+  },
+  "author": "Sarthak Singh",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node --watch src/main.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.9.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6"
+  }
+}
