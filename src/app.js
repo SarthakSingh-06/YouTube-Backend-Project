@@ -17,4 +17,9 @@ app.use(cors({
     origin: process.env.CORS_ORIGIN.split(",") || "http://localhost:8000/"
 }));
 
+// import routes
+import userRouter from "./routes/user.route.js";
+
+app.use("/api/v1/users", userRouter);
+
 export { app };
