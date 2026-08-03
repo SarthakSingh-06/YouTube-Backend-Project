@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Schema, models } from "mongoose";
+import { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -83,4 +83,4 @@ userSchema.methods.generateRefreshToken = function() {
     return token;
 };
 
-export const User = models("User", userSchema);
+export const User = model("User", userSchema);
