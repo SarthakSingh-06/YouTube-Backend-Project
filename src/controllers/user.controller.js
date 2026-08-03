@@ -3,7 +3,9 @@ import { API_Error } from "../utils/api-error.js";
 import { API_Response } from "../utils/api-response.js";
 import { User } from "../models/user.model.js";
 import { uploadFileOnCloudinary } from "../utils/cloudinaryFileUpload.js";
-import { registerUserPostRequestValidationSchema } from "../validators/user.validator.js";
+import { registerUserPostRequestValidationSchema,
+    loginUserPostRequestValidationSchema
+} from "../validators/user.validator.js";
 
 export const registerUser = asyncHandler(async (req, res) => {
     const validationResult = await registerUserPostRequestValidationSchema.safeParseAsync(req.body);
@@ -46,5 +48,67 @@ export const registerUser = asyncHandler(async (req, res) => {
         .status(201)
         .json(
             new API_Response(201, createdNewUser, "User registered successfully")
+        );
+});
+
+export const loginUser = asyncHandler(async (req, res) => {
+    const validationResult = await loginUserPostRequestValidationSchema.safeParseAsync(req.body);
+    if (validationResult.error)
+        throw new API_Error(400, JSON.stringify(validationResult.error.format()));
+
+    const { email, password } = validationResult.data;
+
+    const existingUser = await User.findOne({ email });
+    if (!existingUser)
+        throw new API_Error(401, `User with email ${email} does not exist`);
+
+    const correctPassword = await existingUser.isPasswordCorrect(password);
+    if (!correctPassword)
+        throw new API_Error(401, "Incorrect password");
+
+    const accessToken = await existingUser.generateAccessToken();
+    const refreshToken = await existingUser.generateRefreshToken();
+
+    existingUser.refreshToken = refreshToken;
+    await existingUser.save({ validateBeforeSave: false });
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true
+    };
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(
+            new API_Response(200, {existingUser, accessToken, refreshToken}, "User loggedin successfully")
+        );
+});
+
+export const logoutUser = asyncHandler(async (req, res) => {
+    await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                refreshToken: ""
+            }
+        },
+        {
+            returnDocument: "after"
+        }
+    );
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true
+    };
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", cookieOptions)
+        .clearCookie("refreshToken", cookieOptions)
+        .json(
+            new API_Response(200, {}, "User logged out successfully")
         );
 });

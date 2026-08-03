@@ -39,7 +39,7 @@ const userSchema = new Schema({
         required: [true, "Password is required"],
         minLength: [8, "Password must contain at least 8 characters"]
     },
-    refershToken: {
+    refreshToken: {
         type: String
     }
 },
@@ -78,7 +78,7 @@ userSchema.methods.generateRefreshToken = function() {
     };
 
     const token = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
-        expiresIn: REFRESH_TOKEN_EXPIRY
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY
     });
     return token;
 };

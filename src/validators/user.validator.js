@@ -6,3 +6,8 @@ export const registerUserPostRequestValidationSchema = z.object({
     fullName: z.string("Fullname is requried"),
     password: z.string("Password is required").min(8, "Password must contain at least 8 characters")
 });
+
+export const loginUserPostRequestValidationSchema = z.object({
+    email: z.email("Enter a valid email!"),
+    password: z.string("Password is required").min(8, "Password must contain at least 8 characters")
+});
