@@ -1,11 +1,14 @@
+import "dotenv/config";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { API_Error } from "../utils/api-error.js";
 import { API_Response } from "../utils/api-response.js";
 import { User } from "../models/user.model.js";
 import { uploadFileOnCloudinary } from "../utils/cloudinaryFileUpload.js";
-import { registerUserPostRequestValidationSchema,
+import {
+    registerUserPostRequestValidationSchema,
     loginUserPostRequestValidationSchema
 } from "../validators/user.validator.js";
+import jwt from "jsonwebtoken";
 
 export const registerUser = asyncHandler(async (req, res) => {
     const validationResult = await registerUserPostRequestValidationSchema.safeParseAsync(req.body);
@@ -110,5 +113,46 @@ export const logoutUser = asyncHandler(async (req, res) => {
         .clearCookie("refreshToken", cookieOptions)
         .json(
             new API_Response(200, {}, "User logged out successfully")
+        );
+});
+
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    if (!incomingRefreshToken)
+        throw new API_Error(401, "Unauthorized request");
+
+    const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const user = await User.findById(
+        decodedToken?._id,
+        {
+            refreshToken: 1,
+            email: 1,
+            username: 1,
+            fullName: 1,
+        }
+    );
+
+    if (!user)
+        throw new API_Error(401, "Invalid or expired token provided");
+    if (incomingRefreshToken !== user.refreshToken)
+        throw new API_Error(401, "provided token does not match with the user credentials");
+
+    const newAccessToken = await user.generateAccessToken();
+    const newRefreshToken = await user.generateRefreshToken();
+
+    user.refreshToken = newRefreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true
+    };
+
+    return res
+        .status(200)
+        .cookie("accessToken", newAccessToken, cookieOptions)
+        .cookie("refreshToken", newRefreshToken, cookieOptions)
+        .json(
+            new API_Response(200, {}, "access token refreshed successfully")
         );
 });
