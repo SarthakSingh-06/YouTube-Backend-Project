@@ -11,6 +11,7 @@ import {
     updateAccountDetailsValidationSchema
 } from "../validators/user.validator.js";
 import jwt from "jsonwebtoken";
+import { deleteImageOnCloudinary } from "../utils/deleteFileOnCloudinary.js"
 
 export const registerUser = asyncHandler(async (req, res) => {
     const validationResult = await registerUserPostRequestValidationSchema.safeParseAsync(req.body);
@@ -224,5 +225,61 @@ export const updateAccountDetails = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new API_Response(200, existingUser, "User details updated successfully")
+        );
+});
+
+export const updateUserProfileImage = asyncHandler(async (req, res) => {
+    const newProfileImageLocalPath = req?.file?.path;
+    if (!newProfileImageLocalPath)
+        throw new API_Error(404, "Path to new profile image on local server not found");
+
+    const existingUser = await User.findById(req.user?.id, { profileImage: 1 });
+    
+    const oldProfileImageURL = existingUser.profileImage; // old cloudinary URL
+
+    const newProfileImageOnCloudinary = await uploadFileOnCloudinary(newProfileImageLocalPath);
+    if (!newProfileImageOnCloudinary)
+        throw new API_Error(500, "Uploading new profile image on cloudinary failed!");
+
+    const newProfileImageURL = newProfileImageOnCloudinary.url; // new cloudinary URL
+
+    // delete old profile image on cloudinary
+    await deleteImageOnCloudinary(oldProfileImageURL);
+
+    existingUser.profileImage = newProfileImageURL;
+    await existingUser.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, existingUser, "Profile image updated successfully")
+        );
+});
+
+export const updateUserCoverImage = asyncHandler(async (req, res) => {
+    const newCoverImageLocalPath = req?.file?.path;
+    if (!newCoverImageLocalPath)
+        throw new API_Error(404, "Path to new cover image on local server not found!");
+
+    const existingUser = await User.findById(req.user?.id, { coverImage: 1 });
+
+    const oldCoverImageURL = existingUser.coverImage; // old cloudinary URL
+
+    const newCoverImageOnCloudinary = await uploadFileOnCloudinary(newCoverImageLocalPath);
+    if (!newCoverImageOnCloudinary)
+        throw new API_Error(500, "Uploading new cover image on cloudinary failed!");
+
+    const newCoverImageURL = newCoverImageOnCloudinary.url;
+
+    // delete old cover image on cloudinary
+    await deleteImageOnCloudinary(oldCoverImageURL);
+
+    existingUser.coverImage = newCoverImageURL;
+    await existingUser.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, existingUser, "Cover image updated successfully")
         );
 });
