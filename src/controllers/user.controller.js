@@ -6,7 +6,8 @@ import { User } from "../models/user.model.js";
 import { uploadFileOnCloudinary } from "../utils/cloudinaryFileUpload.js";
 import {
     registerUserPostRequestValidationSchema,
-    loginUserPostRequestValidationSchema
+    loginUserPostRequestValidationSchema,
+    changeCurrentPasswordValidationSchema
 } from "../validators/user.validator.js";
 import jwt from "jsonwebtoken";
 
@@ -154,5 +155,33 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
         .cookie("refreshToken", newRefreshToken, cookieOptions)
         .json(
             new API_Response(200, {}, "access token refreshed successfully")
+        );
+});
+
+export const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const validationResult = await changeCurrentPasswordValidationSchema.safeParseAsync(req.body);
+    if (validationResult.error)
+        throw new API_Error(400, JSON.stringify(validationResult.error.format()));
+
+    const { oldPassword, newPassword } = validationResult.data;
+
+    const existingUser = await User.findById(
+        req.user?._id,
+        {
+            password: 1
+        }
+    );
+
+    const correctPassword = await existingUser.isPasswordCorrect(oldPassword);
+    if (!correctPassword)
+        throw new API_Error(401, "Incorrect current password");
+
+    existingUser.password = newPassword;
+    await existingUser.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, {}, "Password changed successfully")
         );
 });
