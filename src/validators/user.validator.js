@@ -16,3 +16,8 @@ export const changeCurrentPasswordValidationSchema = z.object({
     oldPassword: z.string(),
     newPassword: z.string("New password is required").min(8, "Password must contain at least 8 characters")
 });
+
+export const updateAccountDetailsValidationSchema = z.object({
+    newEmail: z.email("Enter a valid email").optional(),
+    newFullName: z.string("Name can only be a string").optional()
+});

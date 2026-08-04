@@ -7,7 +7,8 @@ import { uploadFileOnCloudinary } from "../utils/cloudinaryFileUpload.js";
 import {
     registerUserPostRequestValidationSchema,
     loginUserPostRequestValidationSchema,
-    changeCurrentPasswordValidationSchema
+    changeCurrentPasswordValidationSchema,
+    updateAccountDetailsValidationSchema
 } from "../validators/user.validator.js";
 import jwt from "jsonwebtoken";
 
@@ -183,5 +184,45 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new API_Response(200, {}, "Password changed successfully")
+        );
+});
+
+export const getCurrentUser  = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, req.user)
+        );
+});
+
+export const updateAccountDetails = asyncHandler(async (req, res) => {
+    const validationResult = await updateAccountDetailsValidationSchema.safeParseAsync(req.body);
+    if (validationResult.error)
+        throw new API_Error(400, JSON.stringify(validationResult.error.format()));
+
+    const { newEmail, newFullName } = validationResult.data;
+
+    if (!newEmail && !newFullName)
+        throw new API_Error(400, "Provide either of new email or name to update details");
+
+    const existingUser = await User.findById(req.user?._id).select(
+        "-watchHistory -profileImage -coverImage -password -refreshToken -createdAt -updatedAt"
+    );
+    if (newFullName)
+        existingUser.fullName = newFullName;
+
+    if (newEmail){
+        // check if user with newEmail already exists
+        const userWithNewEmail = await User.findOne({ email: newEmail }, { email: 1 });
+        if (userWithNewEmail)
+            throw new API_Error(400, `User with email ${newEmail} already exists`);
+        existingUser.email = newEmail;
+    }
+    await existingUser.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, existingUser, "User details updated successfully")
         );
 });
