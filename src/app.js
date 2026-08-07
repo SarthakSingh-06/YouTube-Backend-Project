@@ -21,8 +21,10 @@ app.use(cors({
 // import routes
 import userRouter from "./routes/user.route.js";
 import healthRouter from "./routes/health.route.js";
+import channelPostRouter from "./routes/channelPost.route.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/health", healthRouter);
+app.use("/api/v1/posts", channelPostRouter);
 
 export { app };
