@@ -11,7 +11,8 @@ import {
     updateAccountDetailsValidationSchema
 } from "../validators/user.validator.js";
 import jwt from "jsonwebtoken";
-import { deleteImageOnCloudinary } from "../utils/deleteFileOnCloudinary.js"
+import { deleteImageOnCloudinary } from "../utils/deleteFileOnCloudinary.js";
+import mongoose from "mongoose";
 
 export const registerUser = asyncHandler(async (req, res) => {
     const validationResult = await registerUserPostRequestValidationSchema.safeParseAsync(req.body);
@@ -354,5 +355,60 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new API_Response(200, channel, "User channel fetched successfully")
+        );
+});
+
+export const getUserWatchHistory = asyncHandler(async (req, res) => {
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "Video",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory", // overwrite the existing field
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "User",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner", // overwrite the existing field
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        email: 1,
+                                        profileImage: 1
+                                    }
+                                },
+                                {
+                                    $addFields: {
+                                        owner: {
+                                            $first: "$owner" 
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]);
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(
+                200,
+                user[0].watchHistory,
+                "Watch history fetched successfully"
+            )
         );
 });

@@ -8,13 +8,16 @@ import {
     getCurrentUser,
     updateAccountDetails,
     updateUserProfileImage,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile,
+    getUserWatchHistory
 } from "../controllers/user.controller.js";
 import { uplaod } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
+// unsecured routes
 router.post("/register",
     uplaod.fields([
         {
@@ -29,24 +32,29 @@ router.post("/register",
     registerUser);
 
 router.post("/login", loginUser);
-router.post("/logout", verifyJWT, logoutUser);
 router.post("/refresh-token", refreshAccessToken);
+
+// secured routes
+router.post("/logout", verifyJWT, logoutUser);
 router.post("/change-password", verifyJWT, changeCurrentPassword);
 router.get("/current-user", verifyJWT, getCurrentUser);
-router.post("/update", verifyJWT, updateAccountDetails);
+router.patch("/update", verifyJWT, updateAccountDetails);
 
-router.post(
+router.patch(
     "/update-profile-image",
     verifyJWT,
     uplaod.single("newProfileImage"),
     updateUserProfileImage
 );
 
-router.post(
+router.patch(
     "/update-cover-image",
     verifyJWT,
     uplaod.single("newCoverImage"),
     updateUserCoverImage
 );
+
+router.get("/history", verifyJWT, getUserWatchHistory);
+router.get("/c/:username", verifyJWT, getUserChannelProfile);
 
 export default router;
