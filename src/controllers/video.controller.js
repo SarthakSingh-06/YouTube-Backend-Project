@@ -10,7 +10,45 @@ import { Types as mongooseTypes } from "mongoose";
 
 export const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-    //TODO: get all videos based on query, sort, pagination
+
+    const aggregationOptions = { page, limit };
+
+    const matchStage = {
+        isPublished: true
+    };
+
+    if (query) {
+        // fetch videos related to a particular query if provided
+        matchStage.$or = [
+            { title: { $regex: query, $options: "i" } },
+            { description: { $regex: query, $options: "i" } }
+        ];
+    };
+
+    if (userId) {
+        // If userId is given, all fetched videos must belong to that particular user only otherwise get the relevant videos from all the present users
+        matchStage.owner = new mongoose.Types.ObjectId(userId);
+    };
+
+    const aggregate = Video.aggregate([
+        {
+            $match: matchStage
+        },
+        {
+            $sort: {
+                // get the sorting order
+                sortBy: sortType.toLowerCase() === "asc" ? 1 : -1
+            }
+        }
+    ]);
+
+    const fetchedVideos = await Video.aggregatePaginate(aggregate, aggregationOptions);
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, fetchedVideos, "Videos fetched successfully")
+        );
 });
 
 export const publishVideo = asyncHandler(async (req, res) => {
