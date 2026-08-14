@@ -40,4 +40,6 @@ router
         updateVideo
     );
 
+router.patch("/togglePublishStatus/:videoId", verifyJWT, togglePublishStatus);
+
 export default router;
