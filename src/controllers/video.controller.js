@@ -2,14 +2,23 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { API_Response } from "../utils/api-response.js";
 import { API_Error } from "../utils/api-error.js";
 import {
-    postVideoValidationSchema
+    postVideoValidationSchema,
+    getAllVideosValidationSchema
 } from "../validators/video.validation.js";
 import { uploadFileOnCloudinary } from "../utils/cloudinaryFileUpload.js";
 import { Video } from "../models/video.model.js";
 import { Types as mongooseTypes } from "mongoose";
 
 export const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+    const validationResult = await getAllVideosValidationSchema.safeParseAsync(req.query);
+    if (validationResult.error)
+        throw new API_Error(400, JSON.stringify(validationResult.error.format()));
+
+    const { query, sortBy, sortType, userId } = validationResult.data;
+    const page = Number(validationResult.data.page) ?? 1;
+    const limit = Number(validationResult.data.limit) ?? 10;
+
+    console.table({ page, limit, query, sortBy, sortType, userId });
 
     const aggregationOptions = { page, limit };
 
@@ -37,7 +46,7 @@ export const getAllVideos = asyncHandler(async (req, res) => {
         {
             $sort: {
                 // get the sorting order
-                sortBy: sortType.toLowerCase() === "asc" ? 1 : -1
+                [sortBy]: sortType.toLowerCase() === "asc" ? 1 : -1
             }
         }
     ]);
