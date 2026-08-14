@@ -12,8 +12,6 @@ import { uplaod } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
-router.use(verifyJWT);
-
 router
     .route("/")
     .get(getAllVideos)
@@ -35,8 +33,9 @@ router
 router
     .route("/:videoId")
     .get(getVideoById)
-    .delete(deleteVideo)
+    .delete(verifyJWT, deleteVideo)
     .patch(
+        verifyJWT,
         uplaod.single("thumbnail"),
         updateVideo
     );
