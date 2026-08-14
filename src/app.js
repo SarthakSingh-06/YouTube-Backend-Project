@@ -23,10 +23,12 @@ import userRouter from "./routes/user.route.js";
 import healthRouter from "./routes/health.route.js";
 import channelPostRouter from "./routes/channelPost.route.js";
 import commentRouter from "./routes/comment.route.js";
+import videoRouter from "./routes/video.route.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/health", healthRouter);
 app.use("/api/v1/posts", channelPostRouter);
 app.use("/api/v1/comments", commentRouter);
+app.use("/api/v1/videos", videoRouter);
 
 export { app };
