@@ -18,8 +18,6 @@ export const getAllVideos = asyncHandler(async (req, res) => {
     const page = Number(validationResult.data.page) ?? 1;
     const limit = Number(validationResult.data.limit) ?? 10;
 
-    console.table({ page, limit, query, sortBy, sortType, userId });
-
     const aggregationOptions = { page, limit };
 
     const matchStage = {
