@@ -18,6 +18,7 @@ router
     .route("/")
     .get(getAllVideos)
     .post(
+        verifyJWT,
         uplaod.fields([
             {
                 name: "video",
