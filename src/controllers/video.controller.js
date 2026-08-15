@@ -108,4 +108,25 @@ export const deleteVideo = asyncHandler(async (req, res) => {
 
 export const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
+    if (!videoId)
+        throw new API_Error(400, "Video id is requied to change publish status");
+
+    const existingVideo = await Video.findOneAndUpdate({
+        _id: new mongooseTypes.ObjectId(videoId),
+        owner: new mongooseTypes.ObjectId(req.user?._id)
+    }).select(
+        "-videoFile -thumbnail -description -duration -createdAt -updatedAt"
+    );
+
+    if (!existingVideo)
+        throw new API_Error(404, `Video with id ${videoId} does not exist`);
+
+    existingVideo.isPublished = !existingVideo.isPublished;
+    await existingVideo.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new API_Response( 200, existingVideo, "Video publish status changed successfully")
+        );
 });
