@@ -111,7 +111,7 @@ export const togglePublishStatus = asyncHandler(async (req, res) => {
     if (!videoId)
         throw new API_Error(400, "Video id is requied to change publish status");
 
-    const existingVideo = await Video.findOneAndUpdate({
+    const existingVideo = await Video.findOne({
         _id: new mongooseTypes.ObjectId(videoId),
         owner: new mongooseTypes.ObjectId(req.user?._id)
     }).select(
