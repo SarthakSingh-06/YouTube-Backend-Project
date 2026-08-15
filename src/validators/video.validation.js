@@ -13,3 +13,8 @@ export const getAllVideosValidationSchema = z.object({
     sortType: z.enum(["asc", "desc"]).default("desc"),
     userId: z.string().optional()
 });
+
+export const updateVideoDetailsValidationSchema = z.object({
+    title: z.string().optional(),
+    description: z.string().optional()
+});

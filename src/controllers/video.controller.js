@@ -3,9 +3,11 @@ import { API_Response } from "../utils/api-response.js";
 import { API_Error } from "../utils/api-error.js";
 import {
     postVideoValidationSchema,
-    getAllVideosValidationSchema
+    getAllVideosValidationSchema,
+    updateVideoDetailsValidationSchema
 } from "../validators/video.validation.js";
 import { uploadFileOnCloudinary } from "../utils/cloudinaryFileUpload.js";
+import { deleteImageOnCloudinary } from "../utils/deleteFileOnCloudinary.js";
 import { Video } from "../models/video.model.js";
 import { Types as mongooseTypes } from "mongoose";
 
@@ -93,17 +95,90 @@ export const publishVideo = asyncHandler(async (req, res) => {
 
 export const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
-    //TODO: get video by id
+    
+    const existingVideo = await Video.findOne({
+        _id: new mongooseTypes.ObjectId(videoId),
+        isPublished: true,
+    });
+
+    if (!existingVideo)
+        throw new API_Error(404, `Video with id ${videoId} does not exist`);
+
+    return res
+        .status(200)
+        .json(
+            new API_Response( 200, existingVideo, "Video fetched successfully")
+        );
 });
 
 export const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
-    //TODO: update video details like title, description, thumbnail
+    const validationResult = await updateVideoDetailsValidationSchema.safeParseAsync(req.body);
+    if (validationResult.error)
+        throw new API_Error(400, JSON.stringify(validationResult.error.format()));
+
+    const { title, description } = validationResult.data;
+
+    const existingVideo = await Video.findOne({
+        _id: new mongooseTypes.ObjectId(videoId),
+        owner: new mongooseTypes.ObjectId(req.user?._id),
+    }).select(
+        "-duration -views -isPublished -owner -createdAt -updatedAt"
+    );
+
+    if (!existingVideo)
+        throw new API_Error(404, `Video with id ${videoId} does not exist`);
+
+    if (title && existingVideo.title !== title) {
+        existingVideo.title = title
+    }
+
+    if (description && existingVideo.description !== description) {
+        existingVideo.description = description
+    }
+
+    // logic to update thumbnail
+    let newThumbnailLocalPath = undefined;
+    if (req.file && req.file.path) {
+        newThumbnailLocalPath = req.file.path;
+    }
+    if (newThumbnailLocalPath) {
+        const oldThumbnail = existingVideo.thumbnail;
+        try {
+            await deleteImageOnCloudinary(oldThumbnail);
+            const newThumbnailOnCloudinary = await uploadFileOnCloudinary(newThumbnailLocalPath);
+            existingVideo.thumbnail = newThumbnailOnCloudinary.secure_url;
+        } catch (error) {
+            throw new API_Error(500, "Failed to update video thumbnail.");
+        }
+    }
+    await existingVideo.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, existingVideo, "Video updated successfully")
+        );
 });
 
 export const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
-    //TODO: delete video
+    if (!videoId)
+        throw new API_Error(400, "Video id is requied to change publish status");
+
+    const existingVideo = await Video.findOneAndDelete({
+        _id: new mongooseTypes.ObjectId(videoId),
+        owner: new mongooseTypes.ObjectId(req.user?._id),
+    });
+
+    if (!existingVideo)
+        throw new API_Error(404, `Video with id ${videoId} does not exist`);
+
+    return res
+        .status(200)
+        .json(
+            new API_Response( 200, {}, "Video deleted successfully")
+        );
 });
 
 export const togglePublishStatus = asyncHandler(async (req, res) => {
