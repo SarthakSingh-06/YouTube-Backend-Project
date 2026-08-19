@@ -11,6 +11,35 @@ export const getLikedVideos = asyncHandler(async (req, res) => {
 
 export const toggleCommentLike = asyncHandler(async (req, res) => {
     const { commentId } = req.params;
+    if (!commentId)
+        throw new API_Error(400, "Must provide the comment id to toggle like");
+
+    // remove the like if comment is already liked
+    const removeLike = await Likes.findOneAndDelete({
+        likedBy: new mongooseTypes.ObjectId(req.user?._id),
+        comment: new mongooseTypes.ObjectId(commentId),
+    });
+
+    if (!removeLike) {
+        const newLike = await Likes.insertOne({
+            likedBy: new mongooseTypes.ObjectId(req.user?._id),
+            comment: new mongooseTypes.ObjectId(commentId),
+        });
+
+        // send comment liked response
+        return res
+            .status(201)
+            .json(
+                new API_Response(201, newLike, "comment liked")
+            );
+    }
+
+    // send comment like removed response
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, removeLike, "comment liked removed")
+        );
 });
 
 export const toggleVideoLike = asyncHandler(async (req, res) => {
