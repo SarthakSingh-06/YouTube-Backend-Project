@@ -38,7 +38,7 @@ export const toggleCommentLike = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(
-            new API_Response(200, removeLike, "comment liked removed")
+            new API_Response(200, removeLike, "comment like removed")
         );
 });
 
@@ -54,7 +54,7 @@ export const toggleVideoLike = asyncHandler(async (req, res) => {
     });
 
     if (!removeLike) {
-        // like the video if video does not exist
+        // like the video if like does not exist
         const newLike = await Likes.insertOne({
             video: new mongooseTypes.ObjectId(videoId),
             likedBy: new mongooseTypes.ObjectId(req.user?._id),
@@ -72,10 +72,40 @@ export const toggleVideoLike = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(
-            new API_Response(200, removeLike, "video liked removed")
+            new API_Response(200, removeLike, "video like removed")
         );
 });
 
 export const togglechannelPostLike = asyncHandler(async (req, res) => {
     const { channelPostId } = req.params;
+    if (!channelPostId)
+        throw new API_Error(400, "Must provide the channel post id to toggle like");
+
+    // remove the like if post is already liked
+    const removeLike = await Likes.findOneAndDelete({
+        likedBy: new mongooseTypes.ObjectId(req.user?._id),
+        channelPost: new mongooseTypes.ObjectId(channelPostId)
+    });
+
+    if (!removeLike) {
+        // like the post if like does not exist
+        const newLike = await Likes.insertOne({
+            channelPost: new mongooseTypes.ObjectId(channelPostId),
+            likedBy: new mongooseTypes.ObjectId(req.user?._id),
+        });
+
+        // send post liked response
+        return res
+            .status(201)
+            .json(
+                new API_Response(201, newLike, "channel post liked")
+            );
+    }
+
+    // send post like removed response
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, removeLike, "channel post like removed")
+        );
 });
