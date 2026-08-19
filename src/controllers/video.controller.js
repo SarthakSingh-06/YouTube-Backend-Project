@@ -7,7 +7,10 @@ import {
     updateVideoDetailsValidationSchema
 } from "../validators/video.validation.js";
 import { uploadFileOnCloudinary } from "../utils/cloudinaryFileUpload.js";
-import { deleteImageOnCloudinary } from "../utils/deleteFileOnCloudinary.js";
+import {
+    deleteImageOnCloudinary,
+    deleteVideoOnCloudinary
+} from "../utils/deleteFileOnCloudinary.js";
 import { Video } from "../models/video.model.js";
 import { Types as mongooseTypes } from "mongoose";
 
@@ -173,6 +176,15 @@ export const deleteVideo = asyncHandler(async (req, res) => {
 
     if (!existingVideo)
         throw new API_Error(404, `Video with id ${videoId} does not exist`);
+
+    try {
+        // delete video and thumbnail from Cloudinary
+        await deleteVideoOnCloudinary(existingVideo.videoFile);
+        await deleteImageOnCloudinary(existingVideo.thumbnail);
+    }
+    catch(error){
+        throw new API_Error(error);
+    }
 
     return res
         .status(200)
