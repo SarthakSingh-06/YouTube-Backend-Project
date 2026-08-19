@@ -52,18 +52,22 @@ export const addComment = asyncHandler(async (req, res) => {
 
     const newComment = await Comments.insertOne({
         video: new mongooseTypes.ObjectId(videoId),
-        owner: new mongooseTypes.ObjectId(req.user?._id)
+        owner: new mongooseTypes.ObjectId(req.user?._id),
+        content: comment
     });
 
     return res
         .status(201)
         .json(
-            201,
-            {
-                commentId: newComment._id,
-                content,
-                createdAt: newComment.createdAt
-            }
+            new API_Response(
+                201,
+                {
+                    commentId: newComment._id,
+                    content: comment,
+                    createdAt: newComment.createdAt
+                },
+                "comment added"
+            )
         );
 });
 
