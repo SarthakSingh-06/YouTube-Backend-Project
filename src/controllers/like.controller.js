@@ -6,7 +6,26 @@ import { Comments } from "../models/comments.model.js";
 import { Types as mongooseTypes } from "mongoose";
 
 export const getLikedVideos = asyncHandler(async (req, res) => {
-    // TODO: get all liked videos
+    const likedVideos = await Likes.aggregate([
+        {
+            $match: {
+                video: {
+                    $ne: null
+                }
+            }
+        },
+        {
+            $match: {
+                likedBy: new mongooseTypes.ObjectId(req.user?._id)
+            }
+        }
+    ]);
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, likedVideos)
+        );
 });
 
 export const toggleCommentLike = asyncHandler(async (req, res) => {
