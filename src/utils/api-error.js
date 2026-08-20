@@ -1,5 +1,5 @@
 class API_Error extends Error {
-    constructor(statusCode, message, errors=[], stack="") {
+    constructor(statusCode, message, errors = [], stack = "") {
         super(message);
         this.statusCode = statusCode;
         this.errors = errors;
@@ -8,11 +8,10 @@ class API_Error extends Error {
 
         if (stack) {
             this.stack = stack;
-        }
-        else {
+        } else {
             this.stack = Error.captureStackTrace(this, this.constructor);
         }
-    };
-};
+    }
+}
 
 export { API_Error };

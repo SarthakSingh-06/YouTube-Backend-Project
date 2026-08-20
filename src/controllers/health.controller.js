@@ -5,6 +5,10 @@ export const healthCheck = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(
-            new API_Response( 200, { status: "OK" }, "Server is up and running..." )
+            new API_Response(
+                200,
+                { status: "OK" },
+                "Server is up and running..."
+            )
         );
 });

@@ -18,33 +18,36 @@ export const getVideoComments = asyncHandler(async (req, res) => {
     const aggregate = Comments.aggregate([
         {
             $match: {
-                video: new mongooseTypes.ObjectId(videoId)
-            }
+                video: new mongooseTypes.ObjectId(videoId),
+            },
         },
         {
             $sort: {
-                createdAt: -1 // get newest comment first
-            }
-        }
+                createdAt: -1, // get newest comment first
+            },
+        },
     ]);
 
-    const videoComments = await Comments.aggregatePaginate(aggregate, aggregateOptions);
+    const videoComments = await Comments.aggregatePaginate(
+        aggregate,
+        aggregateOptions
+    );
 
     return res
         .status(200)
         .json(
-            new API_Response(200, videoComments, "Comments for video fetched successfully")
+            new API_Response(
+                200,
+                videoComments,
+                "Comments for video fetched successfully"
+            )
         );
 });
 
 export const addComment = asyncHandler(async (req, res) => {
     const videoId = req.params.videoId;
-    const existingVideo = await Video.findById(
-        videoId,
-        { _id: 1 }
-    );
-    if (!existingVideo)
-        throw new API_Error(404, "Video not found.");
+    const existingVideo = await Video.findById(videoId, { _id: 1 });
+    if (!existingVideo) throw new API_Error(404, "Video not found.");
 
     const comment = req.body.comment;
     if (!comment || comment.trim() === "")
@@ -53,22 +56,20 @@ export const addComment = asyncHandler(async (req, res) => {
     const newComment = await Comments.insertOne({
         video: new mongooseTypes.ObjectId(videoId),
         owner: new mongooseTypes.ObjectId(req.user?._id),
-        content: comment
+        content: comment,
     });
 
-    return res
-        .status(201)
-        .json(
-            new API_Response(
-                201,
-                {
-                    commentId: newComment._id,
-                    content: comment,
-                    createdAt: newComment.createdAt
-                },
-                "comment added"
-            )
-        );
+    return res.status(201).json(
+        new API_Response(
+            201,
+            {
+                commentId: newComment._id,
+                content: comment,
+                createdAt: newComment.createdAt,
+            },
+            "comment added"
+        )
+    );
 });
 
 export const updateComment = asyncHandler(async (req, res) => {
@@ -80,22 +81,26 @@ export const updateComment = asyncHandler(async (req, res) => {
     const updatedComment = await Comments.findOneAndUpdate(
         {
             _id: new mongooseTypes.ObjectId(commentId),
-            owner: new mongooseTypes.ObjectId(req.user?._id)
+            owner: new mongooseTypes.ObjectId(req.user?._id),
         },
         {
             $set: {
-                content: newComment
-            }
+                content: newComment,
+            },
         },
         {
-            returnDocument: "after"
+            returnDocument: "after",
         }
     ).select("-owner -createdAt -video");
 
     return res
         .status(200)
         .json(
-            new API_Response(200, updatedComment, "Comment updated successfully")
+            new API_Response(
+                200,
+                updatedComment,
+                "Comment updated successfully"
+            )
         );
 });
 
@@ -103,21 +108,18 @@ export const deleteComment = asyncHandler(async (req, res) => {
     const commentId = req.params.commentId;
     const deletedComment = await Comments.findOneAndDelete({
         _id: new mongooseTypes.ObjectId(commentId),
-        owner: new mongooseTypes.ObjectId(req.user?._id)
+        owner: new mongooseTypes.ObjectId(req.user?._id),
     });
 
-    if (!deletedComment)
-        throw new API_Error(404, "Comment not found");
+    if (!deletedComment) throw new API_Error(404, "Comment not found");
 
-    return res
-        .status(200)
-        .json(
-            new API_Response(
-                200,
-                {
-                    deletedComment
-                },
-                "Comment deleted successfully"
-            )
-        );
+    return res.status(200).json(
+        new API_Response(
+            200,
+            {
+                deletedComment,
+            },
+            "Comment deleted successfully"
+        )
+    );
 });

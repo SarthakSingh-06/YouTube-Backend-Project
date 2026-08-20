@@ -11,12 +11,14 @@ app.use(express.urlencoded({ limit: "16kb", extended: true }));
 app.use(cookieParser());
 
 // configure CORS requests
-app.use(cors({
-    credentials: true,
-    optionsSuccessStatus: 200,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    origin: process.env.CORS_ORIGIN.split(",") || "http://localhost:8000/"
-}));
+app.use(
+    cors({
+        credentials: true,
+        optionsSuccessStatus: 200,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+        origin: process.env.CORS_ORIGIN.split(",") || "http://localhost:8000/",
+    })
+);
 
 // import routes
 import userRouter from "./routes/user.route.js";

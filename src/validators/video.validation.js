@@ -11,10 +11,10 @@ export const getAllVideosValidationSchema = z.object({
     query: z.string().optional(),
     sortBy: z.enum(["duration", "views"]).default("views"),
     sortType: z.enum(["asc", "desc"]).default("desc"),
-    userId: z.string().optional()
+    userId: z.string().optional(),
 });
 
 export const updateVideoDetailsValidationSchema = z.object({
     title: z.string().optional(),
-    description: z.string().optional()
+    description: z.string().optional(),
 });

@@ -1,16 +1,19 @@
 import { Schema, model } from "mongoose";
 
-const channelPostSchema = new Schema({
-    content: {
-        type: String,
-        required: true
+const channelPostSchema = new Schema(
+    {
+        content: {
+            type: String,
+            required: true,
+        },
+        owner: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+        },
     },
-    owner: {
-        type: Schema.Types.ObjectId,
-        ref: "User"
+    {
+        timestamps: true,
     }
-}, {
-    timestamps: true
-});
+);
 
 export const ChannelPosts = model("ChannelPosts", channelPostSchema);

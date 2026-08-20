@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
         const filename = file.originalname.split(".")[0];
         const ext = file.originalname.replace(filename, "");
         callback(null, `${filename}-${Date.now()}${ext}`);
-    }
+    },
 });
 
 export const uplaod = multer({ storage });

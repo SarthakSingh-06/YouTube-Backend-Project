@@ -10,7 +10,7 @@ import {
     updateUserProfileImage,
     updateUserCoverImage,
     getUserChannelProfile,
-    getUserWatchHistory
+    getUserWatchHistory,
 } from "../controllers/user.controller.js";
 import { uplaod } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -18,18 +18,20 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 // unsecured routes
-router.post("/register",
+router.post(
+    "/register",
     uplaod.fields([
         {
             name: "profileImage",
-            maxCount: 1
+            maxCount: 1,
         },
         {
             name: "coverImage",
-            maxCount: 1
-        }
+            maxCount: 1,
+        },
     ]),
-    registerUser);
+    registerUser
+);
 
 router.post("/login", loginUser);
 router.post("/refresh-token", refreshAccessToken);

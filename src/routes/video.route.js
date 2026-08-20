@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router } from "express";
 import {
     deleteVideo,
     getAllVideos,
@@ -20,25 +20,21 @@ router
         uplaod.fields([
             {
                 name: "video",
-                maxCount: 1
+                maxCount: 1,
             },
             {
                 name: "thumbnail",
-                maxCount: 1
-            }
+                maxCount: 1,
+            },
         ]),
         publishVideo
     );
-    
+
 router
     .route("/:videoId")
     .get(getVideoById)
     .delete(verifyJWT, deleteVideo)
-    .patch(
-        verifyJWT,
-        uplaod.single("thumbnail"),
-        updateVideo
-    );
+    .patch(verifyJWT, uplaod.single("thumbnail"), updateVideo);
 
 router.patch("/togglePublishStatus/:videoId", verifyJWT, togglePublishStatus);
 

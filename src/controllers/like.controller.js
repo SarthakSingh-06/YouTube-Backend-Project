@@ -10,22 +10,18 @@ export const getLikedVideos = asyncHandler(async (req, res) => {
         {
             $match: {
                 video: {
-                    $ne: null
-                }
-            }
+                    $ne: null,
+                },
+            },
         },
         {
             $match: {
-                likedBy: new mongooseTypes.ObjectId(req.user?._id)
-            }
-        }
+                likedBy: new mongooseTypes.ObjectId(req.user?._id),
+            },
+        },
     ]);
 
-    return res
-        .status(200)
-        .json(
-            new API_Response(200, likedVideos)
-        );
+    return res.status(200).json(new API_Response(200, likedVideos));
 });
 
 export const toggleCommentLike = asyncHandler(async (req, res) => {
@@ -48,17 +44,13 @@ export const toggleCommentLike = asyncHandler(async (req, res) => {
         // send comment liked response
         return res
             .status(201)
-            .json(
-                new API_Response(201, newLike, "comment liked")
-            );
+            .json(new API_Response(201, newLike, "comment liked"));
     }
 
     // send comment like removed response
     return res
         .status(200)
-        .json(
-            new API_Response(200, removeLike, "comment like removed")
-        );
+        .json(new API_Response(200, removeLike, "comment like removed"));
 });
 
 export const toggleVideoLike = asyncHandler(async (req, res) => {
@@ -82,28 +74,27 @@ export const toggleVideoLike = asyncHandler(async (req, res) => {
         // send video liked response
         return res
             .status(201)
-            .json(
-                new API_Response(201, newLike, "video liked")
-            );
+            .json(new API_Response(201, newLike, "video liked"));
     }
 
     // send video like removed response
     return res
         .status(200)
-        .json(
-            new API_Response(200, removeLike, "video like removed")
-        );
+        .json(new API_Response(200, removeLike, "video like removed"));
 });
 
 export const togglechannelPostLike = asyncHandler(async (req, res) => {
     const { channelPostId } = req.params;
     if (!channelPostId)
-        throw new API_Error(400, "Must provide the channel post id to toggle like");
+        throw new API_Error(
+            400,
+            "Must provide the channel post id to toggle like"
+        );
 
     // remove the like if post is already liked
     const removeLike = await Likes.findOneAndDelete({
         likedBy: new mongooseTypes.ObjectId(req.user?._id),
-        channelPost: new mongooseTypes.ObjectId(channelPostId)
+        channelPost: new mongooseTypes.ObjectId(channelPostId),
     });
 
     if (!removeLike) {
@@ -116,15 +107,11 @@ export const togglechannelPostLike = asyncHandler(async (req, res) => {
         // send post liked response
         return res
             .status(201)
-            .json(
-                new API_Response(201, newLike, "channel post liked")
-            );
+            .json(new API_Response(201, newLike, "channel post liked"));
     }
 
     // send post like removed response
     return res
         .status(200)
-        .json(
-            new API_Response(200, removeLike, "channel post like removed")
-        );
+        .json(new API_Response(200, removeLike, "channel post like removed"));
 });
