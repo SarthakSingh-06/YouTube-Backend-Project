@@ -1,13 +1,36 @@
-import mongoose, { isValidObjectId } from "mongoose";
-import { Playlist } from "../models/playlist.model.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { Playlists } from "../models/playlist.model.js";
+import { API_Error } from "../utils/api-error.js";
+import { API_Response } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { isValidObjectId, Types as mongooseTypes } from "mongoose";
 
 const createPlaylist = asyncHandler(async (req, res) => {
-    const { name, description } = req.body;
+    const { name="", description="" } = req.body;
+    if (!name.trim() || !description.trim())
+        throw new API_Error(400, "Provide a name and description for your playlist");
 
-    //TODO: create playlist
+    const existingPlaylist = await Playlists.findOne({
+        name, description,
+        owner: new mongooseTypes.ObjectId(req.user?._id)
+    },
+    {
+        _id: 1
+    });
+
+    if (existingPlaylist)
+        throw new API_Error(400, "Playlist alerady exists");
+
+    const newPlaylist = await Playlists.insertOne({
+        name, description,
+        owner: new mongooseTypes.ObjectId(req.user?._id),
+        video: []
+    });
+
+    return res
+        .status(201)
+        .json(
+            new API_Response(201, newPlaylist, "Playlist created successfully")
+        );
 });
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
@@ -48,7 +71,4 @@ export {
     removeVideoFromPlaylist,
     deletePlaylist,
     updatePlaylist,
-Playlist,
-    deletePlaylist,
-    updatePlaylist
 };
