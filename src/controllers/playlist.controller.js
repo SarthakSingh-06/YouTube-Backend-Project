@@ -40,7 +40,21 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
 const getPlaylistById = asyncHandler(async (req, res) => {
     const { playlistId } = req.params;
-    //TODO: get playlist by id
+    if (!playlistId)
+        throw new API_Error(400, "Provide playlist id to proceed.");
+    if (!isValidObjectId(playlistId))
+        throw new API_Error(400, "Provided id is not a valid mongodb object id");
+
+    const existingPlaylist = await Playlists.findById(playlistId).select("-__v");
+
+    if (!existingPlaylist)
+        throw new API_Error(404, `Playlist does not exist`);
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, existingPlaylist, "playlist fetched successfully")
+        );
 });
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
