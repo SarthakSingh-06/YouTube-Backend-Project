@@ -68,7 +68,20 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 
 const deletePlaylist = asyncHandler(async (req, res) => {
     const { playlistId } = req.params;
-    // TODO: delete playlist
+
+    const existingPlaylist = await Playlists.findOneAndDelete({
+        _id: new mongooseTypes.ObjectId(playlistId),
+        owner: new mongooseTypes.ObjectId(req.user?._id)
+    }).select("-__v");
+
+    if (!existingPlaylist)
+        throw new API_Error(404, "Playlist does not exist");
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, existingPlaylist, "Playlist deleted")
+        );
 });
 
 const updatePlaylist = asyncHandler(async (req, res) => {
