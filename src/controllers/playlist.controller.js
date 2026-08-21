@@ -4,6 +4,7 @@ import { API_Response } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { isValidObjectId, Types as mongooseTypes } from "mongoose";
 import { Video } from "../models/video.model.js";
+import { User } from "../models/user.model.js";
 
 const createPlaylist = asyncHandler(async (req, res) => {
     const { name="", description="" } = req.body;
@@ -36,7 +37,38 @@ const createPlaylist = asyncHandler(async (req, res) => {
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    //TODO: get user playlists
+    if (!isValidObjectId(userId))
+        throw new API_Error(400, "Provided user id is not a valid mongodb id");
+
+    const existingUser = await User.findById(
+        userId,
+        {
+            _id: 1
+        }
+    );
+    if (!existingUser)
+        throw new API_Error(400, `User with id ${userId} does not exist`);
+
+    const userPlaylists = await Playlists.aggregate([
+        {
+            $match: {
+                owner: new mongooseTypes.ObjectId(userId)
+            }
+        },
+        {
+            $project: {
+                name: 1,
+                description: 1,
+                videos: 1
+            }
+        }
+    ]);
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, userPlaylists, "user playlists fetched successfully")
+        );
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {
