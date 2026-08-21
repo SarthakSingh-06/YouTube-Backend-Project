@@ -73,8 +73,31 @@ const deletePlaylist = asyncHandler(async (req, res) => {
 
 const updatePlaylist = asyncHandler(async (req, res) => {
     const { playlistId } = req.params;
-    const { name, description } = req.body;
-    //TODO: update playlist
+    const { name="", description="" } = req.body;
+
+    if (!name.trim() && !description.trim())
+        throw new API_Error(400, "Provide one of new name or description to update playlist details.");
+    
+    const existingPlaylist = await Playlists.findOne({
+        _id: new mongooseTypes.ObjectId(playlistId),
+        owner: new mongooseTypes.ObjectId(req.user?._id),
+    }).select("-video -__v");
+
+    if (!existingPlaylist)
+        throw new API_Error(404, "Playlist does not exist");
+
+    if (existingPlaylist.name != name && name !== "")
+        existingPlaylist.name = name;
+    if (existingPlaylist.description != description && description !== "")
+        existingPlaylist.description = description;
+
+    await existingPlaylist.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, existingPlaylist, "Playlist details updated")
+        )
 });
 
 export {
