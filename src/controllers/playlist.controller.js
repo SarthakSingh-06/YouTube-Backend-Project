@@ -91,7 +91,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     if (!existingVideo)
         throw new API_Error(404, "Video does not exist");
 
-    existingPlaylist.videos .push(new mongooseTypes.ObjectId(existingVideo._id));
+    existingPlaylist.videos.push(new mongooseTypes.ObjectId(existingVideo._id));
     await existingPlaylist.save({ validateBeforeSave: false });
 
     return res
@@ -110,7 +110,48 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     const { playlistId, videoId } = req.params;
-    // TODO: remove video from playlist
+    if (!isValidObjectId(playlistId))
+        throw new API_Error(400, "Provided playlist id is not a valid mongodb id");
+    if (!isValidObjectId(videoId))
+        throw new API_Error(400, "Provided video id is not a valid mongodb id");
+
+    const existingPlaylist = await Playlists.findOne(
+        {
+            _id: new mongooseTypes.ObjectId(playlistId),
+            owner: new mongooseTypes.ObjectId(req.user?._id)
+        },
+        {
+            videos: 1
+        }
+    );
+
+    if (!existingPlaylist)
+        throw new API_Error(404, `Playlist does not exist!`);
+
+    const existingVideo = await Video.findById(videoId,
+        {
+            _id: 1,
+            title: 1,
+            description: 1
+        }
+    );
+
+    if (!existingVideo || !existingPlaylist.videos.includes(existingVideo?._id))
+        throw new API_Error(404, "Video does not exist");
+
+    const videoIndex = existingPlaylist.videos.indexOf(existingVideo._id);
+    existingPlaylist.videos.splice(videoIndex, 1);
+    await existingPlaylist.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(
+                200,
+                existingPlaylist,
+                "Video removed from playlist"
+            )
+        );
 });
 
 const deletePlaylist = asyncHandler(async (req, res) => {
