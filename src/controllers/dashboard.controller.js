@@ -11,7 +11,36 @@ const getChannelStats = asyncHandler(async (req, res) => {
 });
 
 const getChannelVideos = asyncHandler(async (req, res) => {
-    // TODO: Get all the videos uploaded by the channel
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const aggregationOptions = { page, limit };
+
+    const aggregate = Video.aggregate([
+        {
+            $match: {
+                owner: new mongooseTypes.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $project: {
+                videoFile: 1,
+                thumbnail: 1,
+                title: 1,
+                description: 1,
+                duration: 1,
+                views: 1
+            }
+        }
+    ]);
+
+    const allVideos = await Video.aggregatePaginate(aggregate, aggregationOptions);
+
+    return res
+        .status(200)
+        .json(
+            new API_Response(200, allVideos, "Your videos fetched successfully")
+        );
 });
 
 export {
