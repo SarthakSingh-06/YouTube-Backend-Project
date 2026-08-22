@@ -33,8 +33,9 @@ export const registerUser = asyncHandler(async (req, res) => {
         throw new API_Error(409, "User with email or username already exists");
 
     let profileImageLocalPath = undefined;
-    const coverImageLocalPath = req?.files?.coverImage[0]?.path;
+    let coverImageLocalPath = undefined;
 
+    // check for profile image local path
     if (
         req.files &&
         Array.isArray(req.files.profileImage) &&
@@ -42,19 +43,30 @@ export const registerUser = asyncHandler(async (req, res) => {
     )
         profileImageLocalPath = req.files.profileImage[0].path;
 
+    // check for cover image local path
+    if (
+        req.files &&
+        Array.isArray(req.files.coverImage) &&
+        req.files.coverImage.length > 0
+    )
+        coverImageLocalPath = req.files.coverImage[0].path;
+
     if (!profileImageLocalPath)
         throw new API_Error(400, "profile image is required");
 
-    const profileImageOnCloudinary = await uploadFileOnCloudinary(
-        profileImageLocalPath
-    );
-    const coverImageOnCloudinary =
-        await uploadFileOnCloudinary(coverImageLocalPath);
+        const profileImageOnCloudinary = await uploadFileOnCloudinary(profileImageLocalPath);
+        const coverImageOnCloudinary = await uploadFileOnCloudinary(coverImageLocalPath);
 
     if (!profileImageOnCloudinary)
         throw new API_Error(
             400,
             "profile image uplaod on cloudinary failed!!!"
+        );
+
+    if (coverImageLocalPath && !coverImageOnCloudinary)
+        throw new API_Error(
+            400,
+            "cover image uplaod on cloudinary failed!!!"
         );
 
     const newUser = await User.create({
@@ -63,7 +75,7 @@ export const registerUser = asyncHandler(async (req, res) => {
         username,
         fullName,
         profileImage: profileImageOnCloudinary.url,
-        coverImage: coverImageOnCloudinary.url || "",
+        coverImage: coverImageOnCloudinary?.url || "",
     });
 
     const createdNewUser = await User.findById(newUser._id).select(
