@@ -7,7 +7,49 @@ import { API_Response } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const getChannelStats = asyncHandler(async (req, res) => {
-    // TODO: Get the channel stats like total video views, total subscribers, total videos, total likes etc.
+    const channelId = new mongooseTypes.ObjectId(req.user._id);
+
+    const [videoStats, subscriberStats, likeStats] = await Promise.all([
+        Video.aggregate([
+            { $match: { owner: channelId } },
+            {
+                $group: {
+                    _id: null,
+                    totalViews: { $sum: "$views" },
+                    totalVideos: { $sum: 1 },
+                },
+            },
+        ]),
+        Subscription.aggregate([
+            { $match: { channel: channelId } },
+            { $count: "totalSubscribers" },
+        ]),
+        Likes.aggregate([
+            { $match: { video: { $exists: true } } },
+            {
+                $lookup: {
+                    from: "videos",
+                    localField: "video",
+                    foreignField: "_id",
+                    as: "videoDetails",
+                },
+            },
+            { $unwind: "$videoDetails" },
+            { $match: { "videoDetails.owner": channelId } },
+            { $count: "totalLikes" },
+        ]),
+    ]);
+
+    const stats = {
+        totalViews: videoStats[0]?.totalViews ?? 0,
+        totalVideos: videoStats[0]?.totalVideos ?? 0,
+        totalSubscribers: subscriberStats[0]?.totalSubscribers ?? 0,
+        totalLikes: likeStats[0]?.totalLikes ?? 0,
+    };
+
+    return res
+        .status(200)
+        .json(new API_Response(200, stats, "Channel stats fetched successfully"));
 });
 
 const getChannelVideos = asyncHandler(async (req, res) => {
